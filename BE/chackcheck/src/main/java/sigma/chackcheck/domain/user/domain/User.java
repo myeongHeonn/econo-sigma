@@ -21,6 +21,8 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "loginId", nullable = false, unique = true)
     private String loginId;
     private String password;
     private String name;
@@ -40,9 +42,7 @@ public class User implements UserDetails {
 
     @Override // 권한 반환
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(
-                new SimpleGrantedAuthority("USER"),
-                new SimpleGrantedAuthority("ADMIN"));
+        return Collections.singletonList(new SimpleGrantedAuthority(role.name()));
     }
 
     // 사용자의 id를 반환(고유한 값)
@@ -52,6 +52,8 @@ public class User implements UserDetails {
     // 사용자의 패스워드 반환
     @Override
     public String getPassword() { return password; }
+
+    public void setPassword(String password) { this.password = password; }
 
     // 계정 만료 여부 반환
     @Override
