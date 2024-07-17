@@ -7,6 +7,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,14 +43,14 @@ import sigma.chackcheck.domain.user.service.UserService;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/books")
 public class BookController {
 
     private final BookService bookService;
     private final BookBorrowService bookBorrowService;
     private final UserService userService;
 
-    @GetMapping("/books/all")
+    @GetMapping("/all")
     public ApiResponse<SuccessBody<BookPageResponse>> getMainPage(
         @RequestParam(value = "page", defaultValue = "0") int page) {
 
@@ -58,7 +59,7 @@ public class BookController {
         return getBookSuccessBodyApiResponse(page, bookList);
     }
 
-    @GetMapping("/books/category")
+    @GetMapping("/category")
     public ApiResponse<SuccessBody<BookPageResponse>> getBooksByCategoryName(
         @RequestParam(value = "categoryName") String categoryName,
         @RequestParam(value = "page", defaultValue = "0") int page
@@ -68,7 +69,7 @@ public class BookController {
         return getBookSuccessBodyApiResponse(page, bookList);
     }
 
-    @GetMapping("/books/all/search")
+    @GetMapping("/all/search")
     public ApiResponse<SuccessBody<BookPageResponse>> getBooksBySearch(
         @RequestParam(value = "keyword") String keyword,
         @RequestParam(value = "page", defaultValue = "0") int page
@@ -78,16 +79,18 @@ public class BookController {
         return getBookSuccessBodyApiResponse(page, bookList);
     }
 
-    @GetMapping("/admin/books/approve")
-    public ApiResponse<SuccessBody<BookApprovePageResponse>> getBookApprovePage(
+    @GetMapping("/category/search")
+    public ApiResponse<SuccessBody<BookPageResponse>> getBooksByCategoryNameAndKeyword(
+        @RequestParam(value = "categoryName") String categoryName,
+        @RequestParam(value = "keyword") String keyword,
         @RequestParam(value = "page", defaultValue = "0") int page
     ){
-        Page<BookApprove> bookApproveList = bookService.getBookApprovePage(page);
+        Page<Book> bookList = bookService.getBookPageByCategoryNameAndKeyword(categoryName,keyword, page);
 
-        return getBookApproveSuccessBodyApiResponse(page, bookApproveList);
+        return getBookSuccessBodyApiResponse(page, bookList);
     }
 
-    @GetMapping("/books/{bookId}")
+    @GetMapping("/{bookId}")
     public ApiResponse<SuccessBody<BookDetailPageResponse>> getBookDetails(
         @PathVariable(value = "bookId") Long bookId
     ){
@@ -119,15 +122,9 @@ public class BookController {
         return ApiResponseGenerator.success(bookDetailPageResponse, HttpStatus.OK, SuccessMessage.GET);
     }
 
-    @PostMapping("/books")
-    public ApiResponse<SuccessBody<Void>> createBookApprove(@RequestBody CreateBookApproveRequest createBookApproveRequest){
-        bookService.createBookApprove(createBookApproveRequest);
-        return ApiResponseGenerator.success(HttpStatus.CREATED, SuccessMessage.CREATE);
-    }
-
-    @PostMapping("/admin/books/approve")
-    public ApiResponse<SuccessBody<Void>> approveBookApprove(@RequestBody CreateBookRequest createBookRequest){
-        bookService.createBook(createBookRequest);
+    @PostMapping()
+    public ApiResponse<SuccessBody<Void>> createBookApprove(@AuthenticationPrincipal User loginUser, @RequestBody CreateBookApproveRequest createBookApproveRequest){
+        bookService.createBookApprove(createBookApproveRequest, loginUser.getId());
         return ApiResponseGenerator.success(HttpStatus.CREATED, SuccessMessage.CREATE);
     }
 
@@ -143,19 +140,5 @@ public class BookController {
         BookPageResponse bookPageResponse = BookPageResponse.of(pageInfo, bookDtoList);
 
         return ApiResponseGenerator.success(bookPageResponse, HttpStatus.OK, SuccessMessage.GET);
-    }
-
-    private ApiResponse<SuccessBody<BookApprovePageResponse>> getBookApproveSuccessBodyApiResponse(
-        @RequestParam(value = "page", defaultValue = "0") int page,
-        Page<BookApprove> bookList) {
-        PageInfo pageInfo =  PageInfo.of(page, bookList.getTotalElements(), bookList.getTotalPages());
-
-        List<BookApproveDTO> bookApproveDtoList = bookList.getContent().stream()
-            .map(bookApprove -> BookApproveDTO.of(bookApprove, userService.findById(bookApprove.getUserId())))
-            .toList();
-
-        BookApprovePageResponse bookApprovePageResponse = BookApprovePageResponse.of(pageInfo, bookApproveDtoList);
-
-        return ApiResponseGenerator.success(bookApprovePageResponse, HttpStatus.OK, SuccessMessage.GET);
     }
 }
