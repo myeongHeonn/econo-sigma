@@ -1,11 +1,7 @@
 package sigma.chackcheck.domain.book.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
+
 import java.util.List;
 import lombok.*;
 
@@ -26,6 +22,7 @@ public class Book {
     // 도서 빌린 횟수
     private Integer borrowCount;
     // 도서 이미지
+    @Column(length = 2000)
     private String imageURL;
     // 도서 관련 정보
     private String information;

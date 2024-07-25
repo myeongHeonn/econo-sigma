@@ -33,6 +33,7 @@ public class BookApprove {
     // 출판사
     private String publisher;
     // 도서 이미지
+    @Column(length = 2000)
     private String imageURL;
     // 도서 관련 정보
     private String information;
